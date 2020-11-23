@@ -74,27 +74,95 @@ impl Display {
             screen,
         }
     }
+
+    /// Try to parse DISPLAY string
+    pub fn from_str(s: &str) -> Result<Self, DisplayError> {
+        let hostname_end = s
+            .find(|c| c == ':')
+            .ok_or(DisplayError::InvalidDisplayFormat)?;
+        let hostname = match &s[0..hostname_end] {
+            "" => None,
+            other => Some(other.into()),
+        };
+        let s = s
+            .get(hostname_end + 1..)
+            .ok_or(DisplayError::InvalidDisplayFormat)?;
+
+        let screen_start = s.find(|c| c == '.');
+        let display_end = screen_start.unwrap_or_else(|| s.len());
+        let display = match &s[0..display_end] {
+            "" => return Err(DisplayError::InvalidDisplayFormat),
+            other => other
+                .parse()
+                .map_err(|_| DisplayError::InvalidDisplayFormat)?,
+        };
+
+        let screen = match screen_start {
+            Some(p) => Some(
+                s.get(p + 1..)
+                    .ok_or(DisplayError::InvalidDisplayFormat)?
+                    .parse()
+                    .map_err(|_| DisplayError::InvalidDisplayFormat)?,
+            ),
+            None => None,
+        };
+
+        Ok(Display {
+            hostname,
+            display,
+            screen,
+        })
+    }
+}
+
+// TODO: Fmt
+#[derive(Debug)]
+pub enum DisplayError {
+    InvalidDisplayFormat,
+}
+
+impl fmt::Display for DisplayError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            DisplayError::InvalidDisplayFormat => write!(f, "Invalid DISPLAY format"),
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Display;
+    use super::{Display, DisplayError};
 
     #[test]
-    fn test_display_fmt_hostname_and_display_and_screen() {
-        let display = Display::new(Some("hostname".into()), 10, Some(20));
-        assert_eq!(display.to_string(), "hostname:10.20");
-    }
+    fn test_display_from_str() {
+        const EXAMPLES: &[&str] = &[":10", ":10.20", "hostname:10", "hostname:10.20"];
 
-    #[test]
-    fn test_display_fmt_display_and_screen() {
-        let display = Display::new(None, 10, Some(20));
-        assert_eq!(display.to_string(), ":10.20");
-    }
+        for example in EXAMPLES {
+            assert_eq!(Display::from_str(*example).unwrap().to_string(), *example);
+        }
 
-    #[test]
-    fn test_display_fmt_display() {
-        let display = Display::new(None, 10, None);
-        assert_eq!(display.to_string(), ":10");
+        const BAD_EXAMPLES: &[&str] = &[
+            "",
+            " ",
+            ":",
+            ".",
+            ":.",
+            "hostname:",
+            "hostname:10.",
+            ":10.",
+            "hostname::10.20",
+            "hostname:10.20.30",
+            "hostname:.10",
+        ];
+
+        for bad_example in BAD_EXAMPLES {
+            match Display::from_str(*bad_example) {
+                Ok(_) => panic!(
+                    "Display parsed invalid display string successfully!: {}",
+                    bad_example
+                ),
+                Err(DisplayError::InvalidDisplayFormat) => {}
+            };
+        }
     }
 }

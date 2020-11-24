@@ -50,6 +50,16 @@ pub struct Display {
     pub screen: Option<u16>,
 }
 
+impl Default for Display {
+    fn default() -> Self {
+        Display {
+            hostname: None,
+            display: 0,
+            screen: None,
+        }
+    }
+}
+
 impl fmt::Display for Display {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
@@ -200,5 +210,10 @@ mod tests {
             display.expect("DISPLAY should be parsed well").to_string(),
             DISPLAY
         );
+    }
+
+    #[test]
+    fn test_default_display() {
+        assert_eq!(Display::default().to_string(), ":0");
     }
 }

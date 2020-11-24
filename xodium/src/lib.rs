@@ -10,6 +10,8 @@
 
 mod connection;
 mod display;
+mod protocol;
+mod utils;
 
 pub use connection::{connect_default, connect_to_display, Connection, ConnectionError};
 pub use display::Display;

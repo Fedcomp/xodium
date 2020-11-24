@@ -1,3 +1,4 @@
+use std::env::{self, VarError};
 use std::fmt;
 
 /// A `DISPLAY` environment variable type.
@@ -113,18 +114,30 @@ impl Display {
             screen,
         })
     }
+
+    pub fn from_env() -> Result<Self, DisplayError> {
+        let raw_display_value = match env::var("DISPLAY") {
+            Ok(v) => v,
+            Err(VarError::NotUnicode(_)) => return Err(DisplayError::InvalidDisplayFormat),
+            Err(VarError::NotPresent) => return Err(DisplayError::DisplayNotSet),
+        };
+
+        Display::from_str(&raw_display_value)
+    }
 }
 
 // TODO: Fmt
 #[derive(Debug)]
 pub enum DisplayError {
     InvalidDisplayFormat,
+    DisplayNotSet,
 }
 
 impl fmt::Display for DisplayError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             DisplayError::InvalidDisplayFormat => write!(f, "Invalid DISPLAY format"),
+            DisplayError::DisplayNotSet => write!(f, "DISPLAY variable not set"),
         }
     }
 }
@@ -132,6 +145,7 @@ impl fmt::Display for DisplayError {
 #[cfg(test)]
 mod tests {
     use super::{Display, DisplayError};
+    use std::env;
 
     #[test]
     fn test_display_from_str() {
@@ -162,7 +176,29 @@ mod tests {
                     bad_example
                 ),
                 Err(DisplayError::InvalidDisplayFormat) => {}
+                Err(other) => panic!(
+                    "Display used invalid error \"{}\" for {}",
+                    other, bad_example
+                ),
             };
         }
+    }
+
+    #[test]
+    fn test_from_env() {
+        const DISPLAY: &str = "hostname:10.20";
+        let old_display_var = env::var_os("DISPLAY");
+
+        env::set_var("DISPLAY", "hostname:10.20");
+        let display = Display::from_env();
+        match old_display_var {
+            Some(d) => env::set_var("DISPLAY", d),
+            None => env::remove_var("DISPLAY"),
+        };
+
+        assert_eq!(
+            display.expect("DISPLAY should be parsed well").to_string(),
+            DISPLAY
+        );
     }
 }

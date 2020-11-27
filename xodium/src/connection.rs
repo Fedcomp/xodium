@@ -1,7 +1,9 @@
 use crate::display::{Display, DisplayError};
+use crate::framed::Framed;
+use crate::protocol::SetupCodec;
+use crate::utils::StreamMarker;
 use std::fmt;
 use std::io;
-use std::io::{Read, Write};
 // TODO: Support other platforms in distant future?
 use std::os::unix::net::UnixStream;
 
@@ -76,18 +78,17 @@ pub fn connect_to_display(display: Display) -> Result<Connection, ConnectionErro
     Connection::setup(Box::new(connection))
 }
 
-pub trait StreamMarker: Read + Write {}
-impl<T: Read + Write> StreamMarker for T {}
-
 /// Xodium connection to X server.
-/// Works over any type implementing [Read] + [Write].
+/// Works over any type implementing [std::io::Read] + [std::io::Write].
 pub struct Connection {
-    _socket: Box<dyn StreamMarker>,
+    _framed: Framed<SetupCodec>,
 }
 
 impl Connection {
     /// Setup connection over any type implementing [Read] + [Write]
-    pub fn setup(_socket: Box<dyn StreamMarker>) -> Result<Self, ConnectionError> {
-        Ok(Connection { _socket })
+    pub fn setup(stream: Box<dyn StreamMarker>) -> Result<Self, ConnectionError> {
+        let setup_codec = SetupCodec::default();
+        let _framed = Framed::new(stream, setup_codec);
+        Ok(Connection { _framed })
     }
 }

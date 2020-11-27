@@ -10,6 +10,7 @@
 
 mod connection;
 mod display;
+mod framed;
 mod protocol;
 mod utils;
 

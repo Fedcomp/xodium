@@ -42,12 +42,12 @@ impl Serialize for SetupRequest {
     fn serialize<W: Write>(&self, mut writer: W) -> io::Result<()> {
         writer.write_all(&[BYTE_ORDER])?;
         writer.write_all(&[0])?; // pad
-        writer.write_all(&PROTOCOL_MAJOR_VERSION.to_le_bytes())?;
-        writer.write_all(&PROTOCOL_MINOR_VERSION.to_le_bytes())?;
+        writer.write_all(&PROTOCOL_MAJOR_VERSION.to_ne_bytes())?;
+        writer.write_all(&PROTOCOL_MINOR_VERSION.to_ne_bytes())?;
         // We ensure protocol name and data are u16 in new(),
         // and never allow build the struct any other way.
-        writer.write_all(&(self.auth_protocol_name.len() as u16).to_le_bytes())?;
-        writer.write_all(&(self.auth_protocol_data.len() as u16).to_le_bytes())?;
+        writer.write_all(&(self.auth_protocol_name.len() as u16).to_ne_bytes())?;
+        writer.write_all(&(self.auth_protocol_data.len() as u16).to_ne_bytes())?;
         writer.write_all(&[0, 0])?; // pad
 
         writer.write_all(&self.auth_protocol_name[..])?;

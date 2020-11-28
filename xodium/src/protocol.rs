@@ -5,10 +5,16 @@ pub(crate) use self::setup_codec::SetupCodec;
 
 use std::io::{self, Read, Write};
 
+#[cfg(target_endian = "big")]
 /// Protocol byte order.
 /// X Window protocol allows us to specify connection endianness,
-/// but we always use little endian as we target linux x86 cpu's.
-pub(crate) const BYTE_ORDER: u8 = b'l';
+/// and we use native endianness for compilation target platform.
+pub const BYTE_ORDER: u8 = b'B';
+#[cfg(target_endian = "little")]
+/// Protocol byte order.
+/// X Window protocol allows us to specify connection endianness,
+/// and we use native endianness for compilation target platform.
+pub const BYTE_ORDER: u8 = b'l';
 
 /// X Window System protocol major version
 pub(crate) const PROTOCOL_MAJOR_VERSION: u16 = 11;

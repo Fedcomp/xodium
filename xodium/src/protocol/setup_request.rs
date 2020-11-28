@@ -11,12 +11,15 @@ pub(crate) struct SetupRequest {
 
 impl SetupRequest {
     pub fn new(
-        auth_protocol_name: Vec<u8>,
-        auth_protocol_data: Vec<u8>,
+        auth_protocol_name: &[u8],
+        auth_protocol_data: &[u8],
     ) -> Result<SetupRequest, TryFromIntError> {
-        // Ensure protocol data and name len() fit u16 required by protocol.
+        // Ensure protocol data and name len() fit to u16 required by protocol.
         u16::try_from(auth_protocol_name.len())?;
         u16::try_from(auth_protocol_data.len())?;
+
+        let auth_protocol_name = auth_protocol_name.to_vec();
+        let auth_protocol_data = auth_protocol_data.to_vec();
 
         Ok(SetupRequest {
             auth_protocol_name,

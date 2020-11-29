@@ -17,7 +17,7 @@ pub(crate) struct XAuthEntry {
     pub connection_family: ConnectionFamily,
     pub display_name: String,
     pub display_number: u16,
-    pub protocol_name: Vec<u8>,
+    pub protocol_name: String,
     pub protocol_data: Vec<u8>,
 }
 
@@ -60,11 +60,12 @@ fn read_entry<R: Read>(mut reader: R) -> Result<Option<XAuthEntry>, ParseError> 
 
     let raw_display_name = read_sized_string(&mut reader)?;
     let raw_display_number = read_sized_string(&mut reader)?;
-    let protocol_name = read_sized_string(&mut reader)?;
+    let raw_protocol_name = read_sized_string(&mut reader)?;
     let protocol_data = read_sized_string(&mut reader)?;
 
     let display_name = String::from_utf8_lossy(&raw_display_name).to_string();
     let display_number: u16 = String::from_utf8_lossy(&raw_display_number).parse().map_err(|_| ParseError::InvalidFile)?;
+    let protocol_name = String::from_utf8_lossy(&raw_protocol_name).to_string();
 
     Ok(Some(XAuthEntry {
         connection_family,
@@ -131,7 +132,7 @@ mod tests {
                 connection_family: ConnectionFamily::Local,
                 display_name: "hostname".into(),
                 display_number: 0,
-                protocol_name: b"MIT-MAGIC-COOKIE-1".to_vec(),
+                protocol_name: "MIT-MAGIC-COOKIE-1".into(),
                 protocol_data: b"\xAB\xCD\xEF".to_vec()
             }
         );
@@ -146,14 +147,14 @@ mod tests {
                     connection_family: ConnectionFamily::Local,
                     display_name: "hostname".into(),
                     display_number: 0,
-                    protocol_name: b"MIT-MAGIC-COOKIE-1".to_vec(),
+                    protocol_name: "MIT-MAGIC-COOKIE-1".into(),
                     protocol_data: b"\xAB\xCD\xEF".to_vec()
                 },
                 XAuthEntry {
                     connection_family: ConnectionFamily::Local,
                     display_name: "hostname".into(),
                     display_number: 1,
-                    protocol_name: b"MIT-MAGIC-COOKIE-1".to_vec(),
+                    protocol_name: "MIT-MAGIC-COOKIE-1".into(),
                     protocol_data: b"\xAB\xCD\xEF".to_vec()
                 }
             ]
@@ -191,7 +192,7 @@ mod tests {
                 connection_family: ConnectionFamily::Local,
                 display_name: "hostname".into(),
                 display_number: 0,
-                protocol_name: b"MIT-MAGIC-COOKIE-1".to_vec(),
+                protocol_name: "MIT-MAGIC-COOKIE-1".into(),
                 protocol_data: b"\xAB\xCD\xEF".to_vec()
             }
         );
@@ -228,7 +229,7 @@ mod tests {
                 connection_family: ConnectionFamily::Local,
                 display_name: "hostname".into(),
                 display_number: 0,
-                protocol_name: b"MIT-MAGIC-COOKIE-1".to_vec(),
+                protocol_name: "MIT-MAGIC-COOKIE-1".into(),
                 protocol_data: b"\xAB\xCD\xEF".to_vec()
             }
         );

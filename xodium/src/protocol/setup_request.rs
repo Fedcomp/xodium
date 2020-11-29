@@ -6,20 +6,20 @@ use std::num::TryFromIntError;
 
 /// Request a connection to X server
 pub(crate) struct SetupRequest {
-    auth_protocol_name: Vec<u8>,
+    auth_protocol_name: String,
     auth_protocol_data: Vec<u8>,
 }
 
 impl SetupRequest {
     pub fn new(
-        auth_protocol_name: &[u8],
+        auth_protocol_name: &str,
         auth_protocol_data: &[u8],
     ) -> Result<SetupRequest, TryFromIntError> {
         // Ensure protocol data and name len() fit to u16 required by protocol.
         u16::try_from(auth_protocol_name.len())?;
         u16::try_from(auth_protocol_data.len())?;
 
-        let auth_protocol_name = auth_protocol_name.to_vec();
+        let auth_protocol_name = auth_protocol_name.to_string();
         let auth_protocol_data = auth_protocol_data.to_vec();
 
         Ok(SetupRequest {
@@ -55,7 +55,7 @@ impl Serialize for SetupRequest {
         writer.write_u8(0)?; // pad
         writer.write_u8(0)?; // pad
 
-        writer.write_all(&self.auth_protocol_name[..])?;
+        writer.write_all(self.auth_protocol_name.as_bytes())?;
         for _ in 0..pad(self.auth_protocol_name.len()) {
             writer.write_u8(0)?;
         }
@@ -80,7 +80,7 @@ mod tests {
         const EXPECTED_AUTHORIZATION_BUF: &[u8] = b"l\0\x0b\0\0\0\0\0\0\0\0\0";
         let mut write_buf = vec![];
 
-        SetupRequest::new(b"", b"")
+        SetupRequest::new("", b"")
             .expect("Empty vecs always pass")
             .serialize(&mut Cursor::new(&mut write_buf))
             .unwrap();
@@ -94,7 +94,7 @@ mod tests {
             b"l\0\x0b\0\0\0\t\0\t\0\0\0auth_name\0\0\0auth_data\0\0\0";
         let mut write_buf = vec![];
 
-        SetupRequest::new(b"auth_name", b"auth_data")
+        SetupRequest::new("auth_name", b"auth_data")
             .expect("Specified values always pass")
             .serialize(&mut Cursor::new(&mut write_buf))
             .unwrap();
